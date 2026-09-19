@@ -1,0 +1,356 @@
+import { NextResponse } from "next/server"
+import bcrypt from "bcryptjs"
+import { connectToDatabase } from "@/lib/mongodb"
+import Doctor from "@/models/Doctor"
+import User from "@/models/User"
+
+export const dynamic = "force-dynamic"
+
+export async function GET(req) {
+  try {
+    await connectToDatabase()
+
+    const { searchParams } = new URL(req.url)
+    const department = searchParams.get("department")
+    const search = searchParams.get("search")
+
+    const query = {
+      $or: [
+        { status: { $regex: /^active$/i } },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    }
+
+    if (department && department !== "All") {
+      query.department = department
+    }
+
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), "i")
+      query.$and = [
+        {
+          $or: [
+            { name: regex },
+            { specialization: regex },
+            { department: regex },
+          ],
+        },
+      ]
+    }
+
+    let doctorList = await Doctor.find(query).sort({
+      rating: -1,
+      createdAt: -1,
+    })
+
+    // Populate missing emails from User collection if needed
+    const populated = await Promise.all(
+      doctorList.map(async (doc) => {
+        const d = doc.toObject()
+        if (!d.email) {
+          const u = await User.findOne({
+            $or: [{ doctorId: d.id }, { _id: d.userId }],
+          })
+          if (u) {
+            d.email = u.email
+            if (!d.phone) d.phone = u.phone
+          }
+        }
+        return {
+          _id: d._id.toString(),
+          id: d.id,
+          name: d.name,
+          email: d.email || "",
+          phone: d.phone || "+91 98765 43210",
+          specialization: d.specialization,
+          department: d.department,
+          experience: d.experience ?? 5,
+          consultationDuration: d.consultationDuration ?? 30,
+          hospital: d.hospital || "MediSlot Hospital",
+          availableDays: d.availableDays || [
+            "Monday",
+            "Tuesday",
+            "Thursday",
+            "Friday",
+          ],
+          startTime: d.startTime || "10:00 AM",
+          endTime: d.endTime || "01:00 PM",
+          weeklySchedule: d.weeklySchedule || {},
+          availableToday: d.availableToday ?? true,
+          status: d.status || "Active",
+          rating: d.rating ?? 4.8,
+          reviewCount: d.reviewCount ?? 0,
+          avatar: d.avatar || "DR",
+        }
+      }),
+    )
+
+    return NextResponse.json({
+      success: true,
+      count: populated.length,
+      doctors: populated,
+    })
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Failed to fetch doctors from database",
+        doctors: [],
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function PATCH(req) {
+  try {
+    await connectToDatabase()
+
+    const body = await req.json()
+    const { doctorId, availableToday } = body
+
+    if (!doctorId) {
+      return NextResponse.json(
+        { success: false, error: "doctorId is required" },
+        { status: 400 },
+      )
+    }
+
+    const doctor = await Doctor.findOne({
+      $or: [
+        { id: doctorId },
+        { _id: doctorId.match(/^[0-9a-fA-F]{24}$/) ? doctorId : null },
+      ],
+    })
+
+    if (doctor) {
+      doctor.availableToday =
+        availableToday !== undefined ? availableToday : !doctor.availableToday
+      await doctor.save()
+
+      return NextResponse.json({
+        success: true,
+        message: "Doctor availability updated",
+        doctorId: doctor.id,
+        availableToday: doctor.availableToday,
+      })
+    }
+
+    return NextResponse.json({ success: false, error: "Doctor not found" }, {
+      status: 404,
+    })
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Failed to update doctor availability",
+      },
+      { status: 500 },
+    )
+  }
+}
+
+// Helper to generate unique @medislot.com email based on doctor name
+export async function generateUniqueDoctorEmail(name) {
+  let base = (name || "")
+    .toLowerCase()
+    .replace(/^dr\.?\s*/i, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim()
+
+  if (!base) {
+    base = "doctor"
+  }
+
+  let candidate = `${base}@medislot.com`
+  let counter = 2
+
+  while (true) {
+    const userMatch = await User.findOne({ email: candidate })
+    const doctorMatch = await Doctor.findOne({ email: candidate })
+
+    if (!userMatch && !doctorMatch) {
+      return candidate
+    }
+
+    candidate = `${base}${counter}@medislot.com`
+    counter++
+  }
+}
+
+export async function POST(req) {
+  try {
+    await connectToDatabase()
+
+    const body = await req.json()
+    const {
+      name,
+      phone,
+      password,
+      confirmPassword,
+      specialization,
+      department,
+      experience,
+      hospital,
+      availableDays,
+      startTime,
+      endTime,
+      consultationDuration,
+    } = body
+
+    // 1. Validation: Required fields (email is auto-generated by backend)
+    if (
+      !name?.trim() ||
+      !phone?.trim() ||
+      !password ||
+      !specialization?.trim() ||
+      !department?.trim()
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please fill all required fields.",
+          error: "Please fill all required fields.",
+        },
+        { status: 400 },
+      )
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Password must be at least 6 characters long.",
+          error: "Password must be at least 6 characters long.",
+        },
+        { status: 400 },
+      )
+    }
+
+    if (confirmPassword !== undefined && password !== confirmPassword) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Passwords do not match.",
+          error: "Passwords do not match.",
+        },
+        { status: 400 },
+      )
+    }
+
+    // 2. Automatically generate unique @medislot.com doctor email
+    const cleanEmail = await generateUniqueDoctorEmail(name)
+
+    // 3. Hash password with bcrypt
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // 4. Generate doctor ID
+    const count = await Doctor.countDocuments()
+    const docId = `d_${Date.now().toString().slice(-6)}_${count + 1}`
+
+    const formattedName = name.trim().startsWith("Dr.")
+      ? name.trim()
+      : `Dr. ${name.trim()}`
+    const initials =
+      formattedName
+        .replace(/^Dr\.\s*/i, "")
+        .split(" ")
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "DR"
+
+    const daysList =
+      Array.isArray(availableDays) && availableDays.length > 0
+        ? availableDays
+        : ["Monday", "Tuesday", "Thursday", "Friday"]
+
+    const sTime = startTime?.trim() || "10:00 AM"
+    const eTime = endTime?.trim() || "01:00 PM"
+    const expNum = Number(experience) || 1
+    const durationNum = Number(consultationDuration) || 30
+    const hosp = hospital?.trim() || "MediSlot Hospital"
+
+    const weeklySchedule = {}
+    for (const day of daysList) {
+      weeklySchedule[day] = `${sTime} – ${eTime}`
+    }
+
+    // 5. Create user in User collection with role "doctor"
+    const newUser = await User.create({
+      name: formattedName,
+      email: cleanEmail,
+      password: hashedPassword,
+      role: "doctor",
+      phone: phone.trim(),
+      specialization: specialization.trim(),
+      department: department.trim(),
+      experience: expNum,
+      consultationDuration: durationNum,
+      hospital: hosp,
+      availableDays: daysList,
+      startTime: sTime,
+      endTime: eTime,
+      status: "Active",
+      doctorId: docId,
+      avatar: initials,
+      lastLogin: new Date(),
+    })
+
+    // 6. Create doctor in Doctor collection
+    const newDoctor = await Doctor.create({
+      id: docId,
+      name: formattedName,
+      email: cleanEmail,
+      phone: phone.trim(),
+      specialization: specialization.trim(),
+      department: department.trim(),
+      experience: expNum,
+      consultationDuration: durationNum,
+      hospital: hosp,
+      availableDays: daysList,
+      startTime: sTime,
+      endTime: eTime,
+      rating: 4.8,
+      reviewCount: 0,
+      availableToday: true,
+      avatar: initials,
+      weeklySchedule,
+      status: "Active",
+      userId: newUser._id,
+    })
+
+    // 7. Return created doctor data WITHOUT returning password
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Doctor added successfully",
+        doctor: {
+          id: newDoctor.id,
+          name: newDoctor.name,
+          email: newDoctor.email,
+          phone: newDoctor.phone,
+          specialization: newDoctor.specialization,
+          department: newDoctor.department,
+          experience: newDoctor.experience,
+          hospital: newDoctor.hospital,
+          role: "doctor",
+          status: newDoctor.status,
+          userId: newUser._id.toString(),
+        },
+      },
+      { status: 201 },
+    )
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Something went wrong. Please try again.",
+        error: error.message || "Something went wrong. Please try again.",
+      },
+      { status: 500 },
+    )
+  }
+}

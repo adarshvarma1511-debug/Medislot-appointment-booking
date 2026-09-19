@@ -1,0 +1,34 @@
+{
+  "name": "medislot-appointment-booking-ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 8443 --webpack",
+    "build": "next build",
+    "start": "next start -p 8443",
+    "format": "oxfmt",
+    "db:start": "node scripts/db/start-mongo.mjs",
+    "db:clean": "node scripts/db/clean-demo-data.mjs",
+    "test:auth": "node scripts/tests/test-google-auth.mjs",
+    "test:e2e": "node scripts/tests/verify-e2e-workflow.mjs"
+  },
+  "dependencies": {
+    "@next/swc-win32-x64-msvc": "16.4.0-canary.34",
+    "@tailwindcss/postcss": "^4.3.3",
+    "bcryptjs": "^3.0.3",
+    "lucide-react": "^1.46.0",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.10.1",
+    "next": "^16.4.0-canary.34",
+    "postcss": "^8.5.28",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-is": "^19.3.0",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.2.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
