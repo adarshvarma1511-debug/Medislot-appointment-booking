@@ -1,8 +1,20 @@
 "use client"
 
+// Successful registration:
+
+// 1. Show success message
+
+// 2. Clear ALL form fields completely
+
+// 3. Reset password visibility state to hidden
+/* Role selector tabs */
+
 import { useState } from "react"
+
 import Link from "next/link"
+
 import { useRouter } from "next/navigation"
+
 import {
   Calendar,
   Eye,
@@ -17,61 +29,97 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 
 export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false)
+
   const [showConfirmPw, setShowConfirmPw] = useState(false)
+
   const [role, setRole] = useState("patient")
+
   const [name, setName] = useState("")
+
   const [email, setEmail] = useState("")
+
   const [phone, setPhone] = useState("")
+
   const [password, setPassword] = useState("")
+
   const [confirmPassword, setConfirmPassword] = useState("")
 
   const [errorMsg, setErrorMsg] = useState("")
+
   const [confirmError, setConfirmError] = useState("")
+
   const [successMsg, setSuccessMsg] = useState("")
+
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
+
   const { registerAccount } = useAuth()
 
   const handleRoleChange = (newRole) => {
     setRole(newRole)
+
     setErrorMsg("")
+
     setSuccessMsg("")
+
     setConfirmError("")
   }
 
   const handleRegister = async (e) => {
     e.preventDefault()
+
     if (loading) return
 
     setErrorMsg("")
+
     setSuccessMsg("")
+
     setConfirmError("")
 
     if (!name.trim()) {
       setErrorMsg("Please enter your full name.")
+
       return
     }
+
     if (!email.trim() || !email.includes("@")) {
       setErrorMsg("Please enter a valid email address.")
+
       return
     }
-    if (!password || password.length < 6) {
+
+    if (
+      !password ||
+      password.length <
+        6
+    ) {
       setErrorMsg("Password must be at least 6 characters.")
+
       return
     }
+
     if (!confirmPassword) {
       setConfirmError("Please confirm your password.")
+
       setErrorMsg("Please confirm your password.")
+
       return
     }
-    if (password !== confirmPassword) {
+
+    if (
+      password !==
+      confirmPassword
+    ) {
       setConfirmError("Passwords do not match.")
+
       setErrorMsg("Passwords do not match.")
+
       return
     }
 
@@ -79,35 +127,48 @@ export default function RegisterPage() {
 
     const accountData = {
       role,
+
       name: name.trim(),
+
       email: email.trim().toLowerCase(),
+
       password,
+
       phone: phone.trim(),
     }
 
     try {
       const res = await registerAccount(accountData)
+
       if (!res.success) {
-        setErrorMsg(res.error || "Registration failed. Please try again.")
+        setErrorMsg(
+          res.error ||
+            "Registration failed. Please try again.",
+        )
+
         setLoading(false)
+
         return
       }
 
-      // Successful registration:
-      // 1. Show success message
       setSuccessMsg("Patient account created successfully.")
+
       setErrorMsg("")
+
       setConfirmError("")
 
-      // 2. Clear ALL form fields completely
       setName("")
+
       setEmail("")
+
       setPhone("")
+
       setPassword("")
+
       setConfirmPassword("")
 
-      // 3. Reset password visibility state to hidden
       setShowPw(false)
+
       setShowConfirmPw(false)
     } catch (err) {
       setErrorMsg("Failed to register account in database.")
@@ -162,7 +223,7 @@ export default function RegisterPage() {
         )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-          {/* Role selector tabs */}
+          {}
           <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-6 text-sm font-semibold">
             <button
               type="button"
@@ -279,7 +340,12 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value)
-                      if (confirmError && confirmPassword && e.target.value === confirmPassword) {
+
+                      if (
+                        confirmError &&
+                        confirmPassword &&
+                        e.target.value === confirmPassword
+                      ) {
                         setConfirmError("")
                       }
                     }}
@@ -313,6 +379,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value)
+
                       if (confirmError) setConfirmError("")
                     }}
                     placeholder="Confirm your password"
@@ -326,7 +393,11 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => setShowConfirmPw(!showConfirmPw)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    aria-label={showConfirmPw ? "Hide confirm password" : "Show confirm password"}
+                    aria-label={
+                      showConfirmPw
+                        ? "Hide confirm password"
+                        : "Show confirm password"
+                    }
                   >
                     {showConfirmPw ? (
                       <EyeOff className="w-4 h-4" />

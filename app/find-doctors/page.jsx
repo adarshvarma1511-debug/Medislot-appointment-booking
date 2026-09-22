@@ -2,7 +2,6 @@
 
 // Compute departments from loaded doctors
 
-
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -14,9 +13,7 @@ const experiences = ["Any", "0-5 years", "5-10 years", "10+ years"]
 
 function FindDoctorsContent() {
   const searchParams = useSearchParams()
-  const initialDept =
-    searchParams.get("dept") ||
-    "All"
+  const initialDept = searchParams.get("dept") || "All"
 
   const [doctorsList, setDoctorsList] = useState([])
   const [loading, setLoading] = useState(true)

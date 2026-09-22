@@ -45,7 +45,8 @@ const DoctorSchema = new mongoose.Schema(
     },
     availableDays: {
       type: [String],
-      default: ["Monday", "Tuesday", "Thursday", "Friday"],
+      default: ["Monday", "Tuesday",
+        "Thursday", "Friday"],
     },
     availableToday: {
       type: Boolean,
@@ -96,4 +97,5 @@ const DoctorSchema = new mongoose.Schema(
   },
 )
 
-export default mongoose.models.Doctor || mongoose.model("Doctor", DoctorSchema)
+export default mongoose.models.Doctor ||
+  mongoose.model("Doctor", DoctorSchema)

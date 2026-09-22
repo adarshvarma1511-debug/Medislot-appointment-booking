@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Search, Menu } from "lucide-react"
 import PatientSidebar from "./PatientSidebar"
 import { useAuth } from "../../context/AuthContext"
-import DatabaseBadge from "../ui/DatabaseBadge"
 import NotificationBell from "../ui/NotificationBell"
 
 export default function PatientLayout({ children }) {
@@ -85,7 +84,6 @@ export default function PatientLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <DatabaseBadge />
             <NotificationBell />
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-xs">

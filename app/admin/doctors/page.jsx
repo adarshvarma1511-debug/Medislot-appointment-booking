@@ -32,9 +32,10 @@
 
 // Filter doctors
 
-
 import { useState, useEffect, Suspense } from "react"
+
 import { useSearchParams } from "next/navigation"
+
 import {
   Plus,
   Search,
@@ -56,79 +57,132 @@ import {
   Hospital,
   Filter,
 } from "lucide-react"
+
 import StatusBadge from "@/components/ui/StatusBadge"
+
 import AdminLayout from "@/components/layout/AdminLayout"
 
 const DAYS_OF_WEEK = [
   "Monday",
+
   "Tuesday",
+
   "Wednesday",
+
   "Thursday",
+
   "Friday",
+
   "Saturday",
+
   "Sunday",
 ]
 
 const avatarColors = {
   AS: "bg-teal-600",
+
   PN: "bg-violet-600",
+
   RK: "bg-blue-600",
+
   SM: "bg-rose-600",
+
   VP: "bg-amber-600",
+
   AR: "bg-emerald-600",
+
   DR: "bg-teal-700",
 }
 
 function DoctorsContent() {
   const searchParams = useSearchParams()
+
   const [doctorsList, setDoctorsList] = useState([])
+
   const [loading, setLoading] = useState(true)
+
   const [query, setQuery] = useState("")
+
   const [deptFilter, setDeptFilter] = useState("All")
+
   const [showAddModal, setShowAddModal] = useState(false)
+
   const [showViewModal, setShowViewModal] = useState(false)
+
   const [showEditModal, setShowEditModal] = useState(false)
+
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const [selectedDoctor, setSelectedDoctor] = useState(null)
+
   const [submitting, setSubmitting] = useState(false)
+
   const [formError, setFormError] = useState("")
+
   const [createdDoctorSuccess, setCreatedDoctorSuccess] = useState(null)
+
   const [formData, setFormData] = useState({
     name: "",
+
     phone: "",
+
     specialization: "",
+
     department: "Cardiology",
+
     experience: "5",
+
     consultationDuration: "30",
+
     hospital: "MediSlot Hospital",
+
     password: "",
+
     confirmPassword: "",
+
     availableDays: ["Monday", "Tuesday", "Thursday", "Friday"],
+
     startTime: "10:00 AM",
+
     endTime: "01:00 PM",
   })
+
   const [editFormData, setEditFormData] = useState({
     id: "",
+
     name: "",
+
     email: "",
+
     phone: "",
+
     specialization: "",
+
     department: "",
+
     experience: "",
+
     consultationDuration: "30",
+
     hospital: "",
+
     availableDays: [],
+
     startTime: "10:00 AM",
+
     endTime: "01:00 PM",
+
     status: "Active",
   })
 
   const fetchDoctors = async () => {
     try {
       setLoading(true)
+
       const res = await fetch("/api/doctors")
+
       const data = await res.json()
+
       if (data.success && Array.isArray(data.doctors)) {
         setDoctorsList(data.doctors)
       } else {
@@ -136,6 +190,7 @@ function DoctorsContent() {
       }
     } catch (err) {
       console.warn("Failed to fetch doctors from API:", err)
+
       setDoctorsList([])
     } finally {
       setLoading(false)
@@ -147,63 +202,63 @@ function DoctorsContent() {
   }, [])
 
   useEffect(() => {
-    if (
-      searchParams.get("action") ===
-      "add"
-    ) {
+    if (searchParams.get("action") === "add") {
       setShowAddModal(true)
     }
   }, [searchParams])
+
   const toggleDay = (day) => {
     setFormData((prev) => {
       const exists = prev.availableDays.includes(day)
+
       const nextDays = exists
         ? prev.availableDays.filter(
-            (d) =>
-              d !==
-              day,
+            (d) => d !== day,
           )
         : [...prev.availableDays, day]
+
       return { ...prev, availableDays: nextDays }
     })
   }
+
   const toggleEditDay = (day) => {
     setEditFormData((prev) => {
       const exists = prev.availableDays.includes(day)
+
       const nextDays = exists
         ? prev.availableDays.filter(
-            (d) =>
-              d !==
-              day,
+            (d) => d !== day,
           )
         : [...prev.availableDays, day]
+
       return { ...prev, availableDays: nextDays }
     })
   }
+
   const handleAddDoctorSubmit = async (e) => {
     e.preventDefault()
+
     setFormError("")
+
     if (!formData.name.trim()) return setFormError("Doctor name is required.")
+
     if (!formData.phone.trim()) return setFormError("Phone number is required.")
+
     if (!formData.specialization.trim())
       return setFormError("Specialization is required.")
+
     if (!formData.department.trim())
       return setFormError("Department is required.")
+
     if (!formData.password) return setFormError("Password is required.")
-    if (
-      formData.password.length <
-      6
-    )
+
+    if (formData.password.length < 6)
       return setFormError("Password must be at least 6 characters.")
-    if (
-      formData.password !==
-      formData.confirmPassword
-    )
+
+    if (formData.password !== formData.confirmPassword)
       return setFormError("Passwords do not match.")
-    if (
-      formData.availableDays.length ===
-      0
-    )
+
+    if (formData.availableDays.length === 0)
       return setFormError("Please select at least one available day.")
 
     setSubmitting(true)
@@ -211,7 +266,9 @@ function DoctorsContent() {
     try {
       const res = await fetch("/api/doctors", {
         method: "POST",
+
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify(formData),
       })
 
@@ -221,23 +278,39 @@ function DoctorsContent() {
         setFormError(
           data.message || data.error || "Failed to create doctor account.",
         )
+
         setSubmitting(false)
+
         return
       }
+
       setCreatedDoctorSuccess(data.doctor)
+
       setShowAddModal(false)
+
       setFormData({
         name: "",
+
         phone: "",
+
         specialization: "",
+
         department: "Cardiology",
+
         experience: "5",
+
         consultationDuration: "30",
+
         hospital: "MediSlot Hospital",
+
         password: "",
+
         confirmPassword: "",
+
         availableDays: ["Monday", "Tuesday", "Thursday", "Friday"],
+
         startTime: "10:00 AM",
+
         endTime: "01:00 PM",
       })
 
@@ -248,81 +321,85 @@ function DoctorsContent() {
       setSubmitting(false)
     }
   }
+
   const handleOpenView = (doctor) => {
     setSelectedDoctor(doctor)
+
     setShowViewModal(true)
   }
+
   const handleOpenEdit = (doctor) => {
     setSelectedDoctor(doctor)
+
     setEditFormData({
       id: doctor.id,
-      name:
-        doctor.name ||
-        "",
-      email:
-        doctor.email ||
-        "",
-      phone:
-        doctor.phone ||
-        "+91 98765 43210",
-      specialization:
-        doctor.specialization ||
-        "",
-      department:
-        doctor.department ||
-        "",
+
+      name: doctor.name || "",
+
+      email: doctor.email || "",
+
+      phone: doctor.phone || "+91 98765 43210",
+
+      specialization: doctor.specialization || "",
+
+      department: doctor.department || "",
+
       experience:
-        doctor.experience !==
-        undefined
-          ? String(doctor.experience)
-          : "5",
+        doctor.experience !== undefined ? String(doctor.experience) : "5",
+
       consultationDuration:
-        doctor.consultationDuration !==
-        undefined
+        doctor.consultationDuration !== undefined
           ? String(doctor.consultationDuration)
           : "30",
-      hospital:
-        doctor.hospital ||
-        "MediSlot Hospital",
+
+      hospital: doctor.hospital || "MediSlot Hospital",
+
       availableDays: Array.isArray(doctor.availableDays)
         ? doctor.availableDays
         : ["Monday", "Tuesday", "Thursday", "Friday"],
-      startTime:
-        doctor.startTime ||
-        "10:00 AM",
-      endTime:
-        doctor.endTime ||
-        "01:00 PM",
-      status:
-        doctor.status ||
-        "Active",
+
+      startTime: doctor.startTime || "10:00 AM",
+
+      endTime: doctor.endTime || "01:00 PM",
+
+      status: doctor.status || "Active",
     })
+
     setFormError("")
+
     setShowEditModal(true)
   }
+
   const handleEditDoctorSubmit = async (e) => {
     e.preventDefault()
+
     setFormError("")
+
     setSubmitting(true)
 
     try {
       const res = await fetch(`/api/admin/doctors/${editFormData.id}`, {
         method: "PUT",
+
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify(editFormData),
       })
 
       const data = await res.json()
+
       if (!res.ok || !data.success) {
         setFormError(
-          data.error ||
-            "Failed to update doctor.",
+          data.error || "Failed to update doctor.",
         )
+
         setSubmitting(false)
+
         return
       }
 
       setShowEditModal(false)
+
       fetchDoctors()
     } catch (err) {
       setFormError("Failed to update doctor.")
@@ -330,25 +407,32 @@ function DoctorsContent() {
       setSubmitting(false)
     }
   }
+
   const handleOpenDelete = (doctor) => {
     setSelectedDoctor(doctor)
+
     setShowDeleteModal(true)
   }
+
   const handleConfirmDelete = async () => {
     if (!selectedDoctor) return
+
     setSubmitting(true)
+
     try {
       const res = await fetch(`/api/admin/doctors/${selectedDoctor.id}`, {
         method: "DELETE",
       })
+
       const data = await res.json()
+
       if (data.success) {
         setShowDeleteModal(false)
+
         fetchDoctors()
       } else {
         alert(
-          data.error ||
-            "Failed to delete doctor.",
+          data.error || "Failed to delete doctor.",
         )
       }
     } catch (err) {
@@ -357,18 +441,22 @@ function DoctorsContent() {
       setSubmitting(false)
     }
   }
+
   const departments = [
     "All",
+
     ...new Set(doctorsList.map((d) => d.department).filter(Boolean)),
   ]
 
   const filtered = doctorsList.filter((d) => {
     const matchesDept = deptFilter === "All" || d.department === deptFilter
+
     const matchesQuery =
       d.name?.toLowerCase().includes(query.toLowerCase()) ||
       d.email?.toLowerCase().includes(query.toLowerCase()) ||
       d.department?.toLowerCase().includes(query.toLowerCase()) ||
       d.specialization?.toLowerCase().includes(query.toLowerCase())
+
     return matchesDept && matchesQuery
   })
 
@@ -392,6 +480,7 @@ function DoctorsContent() {
           <button
             onClick={() => {
               setFormError("")
+
               setShowAddModal(true)
             }}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm active:scale-[0.99]"
@@ -516,11 +605,17 @@ function DoctorsContent() {
                     const initials =
                       d.avatar ||
                       d.name
+
                         ?.replace(/^Dr\.\s*/i, "")
+
                         .split(" ")
+
                         .map((n) => n[0])
+
                         .join("")
+
                         .toUpperCase()
+
                         .slice(0, 2) ||
                       "DR"
 
@@ -700,6 +795,7 @@ function DoctorsContent() {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
+
                             specialization: e.target.value,
                           })
                         }
@@ -715,6 +811,7 @@ function DoctorsContent() {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
+
                             department: e.target.value,
                           })
                         }
@@ -746,6 +843,7 @@ function DoctorsContent() {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
+
                             experience: e.target.value,
                           })
                         }
@@ -761,6 +859,7 @@ function DoctorsContent() {
                         onChange={(e) =>
                           setFormData({
                             ...formData,
+
                             consultationDuration: e.target.value,
                           })
                         }
@@ -810,9 +909,13 @@ function DoctorsContent() {
                         {formData.name.trim() ? (
                           `${
                             formData.name
+
                               .trim()
+
                               .toLowerCase()
+
                               .replace(/^dr\.?\s*/i, "")
+
                               .replace(/[^a-z0-9]/g, "") || "doctor"
                           }@medislot.com`
                         ) : (
@@ -842,6 +945,7 @@ function DoctorsContent() {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
+
                               password: e.target.value,
                             })
                           }
@@ -863,6 +967,7 @@ function DoctorsContent() {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
+
                               confirmPassword: e.target.value,
                             })
                           }
@@ -887,6 +992,7 @@ function DoctorsContent() {
                         {DAYS_OF_WEEK.map((day) => {
                           const isSelected =
                             formData.availableDays.includes(day)
+
                           return (
                             <button
                               key={day}
@@ -923,6 +1029,7 @@ function DoctorsContent() {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
+
                               startTime: e.target.value,
                             })
                           }
@@ -941,6 +1048,7 @@ function DoctorsContent() {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
+
                               endTime: e.target.value,
                             })
                           }
@@ -1175,14 +1283,16 @@ function DoctorsContent() {
                         {(Array.isArray(selectedDoctor.availableDays)
                           ? selectedDoctor.availableDays
                           : ["Monday", "Tuesday", "Thursday", "Friday"]
-                        ).map((day) => (
-                          <span
-                            key={day}
-                            className="px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-md font-medium text-[11px]"
-                          >
-                            {day}
-                          </span>
-                        ))}
+                        )
+
+                          .map((day) => (
+                            <span
+                              key={day}
+                              className="px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-md font-medium text-[11px]"
+                            >
+                              {day}
+                            </span>
+                          ))}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-1">
@@ -1260,6 +1370,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           name: e.target.value,
                         })
                       }
@@ -1277,6 +1388,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           phone: e.target.value,
                         })
                       }
@@ -1294,6 +1406,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           specialization: e.target.value,
                         })
                       }
@@ -1311,6 +1424,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           department: e.target.value,
                         })
                       }
@@ -1327,6 +1441,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           experience: e.target.value,
                         })
                       }
@@ -1342,6 +1457,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           consultationDuration: e.target.value,
                         })
                       }
@@ -1364,6 +1480,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           hospital: e.target.value,
                         })
                       }
@@ -1380,6 +1497,7 @@ function DoctorsContent() {
                     {DAYS_OF_WEEK.map((day) => {
                       const isSelected =
                         editFormData.availableDays.includes(day)
+
                       return (
                         <button
                           key={day}
@@ -1412,6 +1530,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           startTime: e.target.value,
                         })
                       }
@@ -1428,6 +1547,7 @@ function DoctorsContent() {
                       onChange={(e) =>
                         setEditFormData({
                           ...editFormData,
+
                           endTime: e.target.value,
                         })
                       }

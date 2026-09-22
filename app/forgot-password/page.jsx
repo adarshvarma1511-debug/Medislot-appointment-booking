@@ -1,16 +1,16 @@
 "use client"
 
 import { Suspense } from "react"
+
 import Link from "next/link"
+
 import { useSearchParams } from "next/navigation"
-import {
-  Calendar,
-  ArrowLeft,
-  ShieldCheck,
-} from "lucide-react"
+
+import { Calendar, ArrowLeft, ShieldCheck } from "lucide-react"
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams()
+
   const role = searchParams.get("role") || "patient"
 
   return (
@@ -29,7 +29,8 @@ function ForgotPasswordContent() {
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Password Reset</h1>
         <p className="text-slate-500 mt-1 text-sm">
-          Password changes and resets are managed securely inside Account Settings.
+          Password changes and resets are managed securely inside Account
+          Settings.
         </p>
       </div>
 
@@ -43,7 +44,9 @@ function ForgotPasswordContent() {
             Managed via Account Settings
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
-            To reset or change your password, please sign in to your account and navigate to <strong>Profile & Settings &rarr; Password & Security</strong>.
+            To reset or change your password, please sign in to your account and
+            navigate to{" "}
+            <strong>Profile & Settings &rarr; Password & Security</strong>.
           </p>
         </div>
 

@@ -6,10 +6,12 @@
 
 // Save or remove remembered email in cache
 
-
 import { useState, useEffect, Suspense } from "react"
+
 import Link from "next/link"
+
 import { useRouter, useSearchParams } from "next/navigation"
+
 import {
   Calendar,
   Eye,
@@ -20,51 +22,71 @@ import {
   UserCheck,
   AlertCircle,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 
 function LoginFormContent() {
   const [showPw, setShowPw] = useState(false)
+
   const [role, setRole] = useState("patient")
+
   const [email, setEmail] = useState("")
+
   const [password, setPassword] = useState("")
+
   const [errorMsg, setErrorMsg] = useState("")
+
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
+
   const searchParams = useSearchParams()
+
   const { user, isAuthenticated, isLoaded, loginWithCredentials, logout } =
     useAuth()
 
   const alertMessage = searchParams.get("message")
+
   const searchError = searchParams.get("error")
+
   const redirectFrom = searchParams.get("from")
 
   useEffect(() => {
     setEmail("")
+
     setPassword("")
+
     try {
       localStorage.removeItem("medislot_remembered_patient")
+
       localStorage.removeItem("medislot_remembered_doctor")
     } catch (e) {}
   }, [])
 
   const handleRoleChange = (newRole) => {
     setRole(newRole)
+
     setEmail("")
+
     setPassword("")
+
     setErrorMsg("")
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     setErrorMsg("")
 
     if (!email.trim() || !email.includes("@")) {
       setErrorMsg("Please enter a valid email address.")
+
       return
     }
+
     if (!password) {
       setErrorMsg("Please enter your password.")
+
       return
     }
 
@@ -72,13 +94,17 @@ function LoginFormContent() {
 
     try {
       const cleanEmail = email.trim().toLowerCase()
+
       const result = await loginWithCredentials(cleanEmail, password, role)
+
       if (!result.success) {
         setErrorMsg(
           result.error ||
             "Authentication failed. Please check your credentials.",
         )
+
         setLoading(false)
+
         return
       }
 
@@ -93,6 +119,7 @@ function LoginFormContent() {
       }
     } catch (err) {
       setErrorMsg("An unexpected error occurred during login.")
+
       setLoading(false)
     }
   }
@@ -117,7 +144,6 @@ function LoginFormContent() {
           {role === "doctor" ? "Doctor Portal" : "Patient Dashboard"}
         </p>
       </div>
-
 
       {alertMessage && (
         <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-xl text-teal-800 text-sm shadow-sm flex items-center gap-2 font-medium">
@@ -236,8 +262,6 @@ function LoginFormContent() {
                 : "Sign In to Patient Dashboard"}
           </button>
         </form>
-
-
 
         {role === "patient" ? (
           <p className="text-center text-xs text-slate-500 mt-6">

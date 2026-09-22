@@ -2,16 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import {
-  Search,
-  Menu,
-  Stethoscope,
-  CheckCircle2,
-  Moon,
-} from "lucide-react"
+import { Search, Menu, Stethoscope, CheckCircle2, Moon } from "lucide-react"
 import DoctorSidebar from "./DoctorSidebar"
 import { useAuth } from "../../context/AuthContext"
-import DatabaseBadge from "../ui/DatabaseBadge"
 import NotificationBell from "../ui/NotificationBell"
 
 export default function DoctorLayout({ children }) {
@@ -110,7 +103,6 @@ export default function DoctorLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            <DatabaseBadge />
             {}
             <button
               onClick={() => toggleDoctorAvailability(doctorId)}

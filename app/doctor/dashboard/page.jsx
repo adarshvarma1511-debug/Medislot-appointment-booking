@@ -4,8 +4,8 @@
 
 // Filter appointments for this logged-in doctor
 
-
 import { useState, useEffect } from "react"
+
 import {
   Calendar,
   Clock,
@@ -22,21 +22,32 @@ import {
   Mail,
   Edit3,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
+
 import StatusBadge from "@/components/ui/StatusBadge"
+
 import DoctorLayout from "@/components/layout/DoctorLayout"
 
 export default function DoctorDashboardPage() {
   const {
     user,
+
     appointments,
+
     updateAppointmentStatus,
+
     doctorAvailabilities,
+
     toggleDoctorAvailability,
+
     fetchAppointments,
   } = useAuth()
+
   const [filter, setFilter] = useState("all")
+
   const [selectedAppt, setSelectedAppt] = useState(null)
+
   const [noteModalOpen, setNoteModalOpen] = useState(false)
 
   useEffect(() => {
@@ -44,47 +55,65 @@ export default function DoctorDashboardPage() {
       fetchAppointments(user)
     }
   }, [user, fetchAppointments])
+
   const [diagnosis, setDiagnosis] = useState("")
+
   const [prescription, setPrescription] = useState("")
+
   const [instructions, setInstructions] = useState("")
+
   const [followUpDate, setFollowUpDate] = useState("")
+
   const [savedSuccess, setSavedSuccess] = useState(false)
 
   const doctorId = user?.doctorId || user?._id || user?.id || ""
+
   const isAvailableToday = doctorId
-    ? (doctorAvailabilities[doctorId] ??
-      true)
+    ? (doctorAvailabilities[doctorId] ?? true)
     : true
+
   const docNameClean = user?.name
     ? user.name
+
         .replace(/^Dr\.\s*/i, "")
+
         .trim()
+
         .toLowerCase()
     : ""
+
   const doctorAppointments = appointments.filter((a) => {
     if (user?._id && (a.doctorUserId === user._id || a.doctorId === user._id))
       return true
+
     if (user?.doctorId && a.doctorId === user.doctorId) return true
+
     if (doctorId && a.doctorId === doctorId) return true
+
     if (user?.name && a.doctorName?.toLowerCase() === user.name.toLowerCase())
       return true
+
     if (docNameClean && a.doctorName?.toLowerCase().includes(docNameClean))
       return true
+
     return false
   })
 
   const todayAppts = doctorAppointments.filter(
     (a) => a.status === "confirmed" || a.status === "upcoming",
   )
+
   const completedAppts = doctorAppointments.filter(
     (a) => a.status === "completed",
   )
+
   const cancelledAppts = doctorAppointments.filter(
     (a) => a.status === "cancelled",
   )
 
   const filteredAppointments = doctorAppointments.filter((a) => {
     if (filter === "all") return true
+
     return a.status === filter
   })
 
@@ -92,34 +121,50 @@ export default function DoctorDashboardPage() {
 
   const handleOpenNoteModal = (appt) => {
     setSelectedAppt(appt)
+
     setDiagnosis(appt.consultationDetails?.diagnosis || "")
+
     setPrescription(appt.consultationDetails?.prescription || "")
+
     setInstructions(appt.consultationDetails?.instructions || "")
+
     setFollowUpDate(appt.consultationDetails?.followUpDate || "")
+
     setNoteModalOpen(true)
+
     setSavedSuccess(false)
   }
 
   const handleSaveConsultation = (e) => {
     e.preventDefault()
+
     if (!selectedAppt) return
 
     const note = {
       diagnosis,
+
       prescription,
+
       instructions,
+
       followUpDate,
+
       addedAt: new Date().toLocaleDateString("en-US", {
         month: "short",
+
         day: "numeric",
+
         year: "numeric",
       }),
     }
 
     updateAppointmentStatus(selectedAppt.id, "completed", note)
+
     setSavedSuccess(true)
+
     setTimeout(() => {
       setNoteModalOpen(false)
+
       setSavedSuccess(false)
     }, 1200)
   }
@@ -292,9 +337,13 @@ export default function DoctorDashboardPage() {
                   <div className="flex items-center gap-3.5 p-3.5 bg-slate-50 rounded-xl">
                     <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm">
                       {nextPatient.patientName
+
                         .split(" ")
+
                         .map((n) => n[0])
+
                         .join("")
+
                         .slice(0, 2)}
                     </div>
                     <div>

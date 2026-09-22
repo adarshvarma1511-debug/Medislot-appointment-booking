@@ -2,27 +2,38 @@
 
 // Extract unique patients from appointments
 
-
 import { useState } from "react"
+
 import { Search, Mail, Phone, Calendar } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
+
 import DoctorLayout from "@/components/layout/DoctorLayout"
 
 export default function DoctorPatientsPage() {
   const { appointments } = useAuth()
+
   const [query, setQuery] = useState("")
+
   const uniquePatientsMap = new Map()
+
   appointments.forEach((a) => {
     if (a.patientEmail && !uniquePatientsMap.has(a.patientEmail)) {
       uniquePatientsMap.set(a.patientEmail, {
         name: a.patientName,
+
         email: a.patientEmail,
+
         phone: a.patientPhone,
+
         appointmentsCount: appointments.filter(
           (x) => x.patientEmail === a.patientEmail,
         ).length,
+
         lastVisit: a.date,
+
         lastReason: a.reason,
+
         consultationDetails: a.consultationDetails,
       })
     }
@@ -71,9 +82,13 @@ export default function DoctorPatientsPage() {
           {patientList.map((p) => {
             const initials = p.name
               ? p.name
+
                   .split(" ")
+
                   .map((n) => n[0])
+
                   .join("")
+
                   .slice(0, 2)
               : "PT"
 

@@ -10,7 +10,6 @@ const ConsultationDetailsSchema = new mongoose.Schema(
   },
   { _id: false },
 )
-
 const AppointmentSchema = new mongoose.Schema(
   {
     id: {
@@ -78,7 +77,8 @@ const AppointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["confirmed", "upcoming", "completed", "cancelled"],
+      enum: ["confirmed", "upcoming",
+        "completed", "cancelled"],
       default: "confirmed",
     },
     reason: {
@@ -94,9 +94,7 @@ const AppointmentSchema = new mongoose.Schema(
     timestamps: true,
   },
 )
-
 AppointmentSchema.index({ doctorId: 1, date: 1, time: 1, status: 1 })
-
 AppointmentSchema.pre("validate", function () {
   if (this.id && !this.appointmentId) {
     this.appointmentId = this.id
@@ -104,9 +102,7 @@ AppointmentSchema.pre("validate", function () {
     this.id = this.appointmentId
   }
 })
-
 if (mongoose.models && mongoose.models.Appointment) {
   delete mongoose.models.Appointment
 }
-
 export default mongoose.model("Appointment", AppointmentSchema)

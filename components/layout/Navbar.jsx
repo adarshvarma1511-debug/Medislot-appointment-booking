@@ -1,38 +1,50 @@
 "use client"
 
+// Only show active user session for patient and doctor accounts on the public navbar.
+
+// Admin accounts belong to the backoffice portal, so keep only the "Login" button on the public landing page.
+
 import { useState } from "react"
+
 import Link from "next/link"
+
 import { useRouter } from "next/navigation"
+
 import { Calendar, Menu, X, LogOut, LogIn } from "lucide-react"
+
 import { useAuth } from "../../context/AuthContext"
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+
   const router = useRouter()
+
   const { isAuthenticated, user, logout } = useAuth()
 
   const handleLogout = async () => {
     setOpen(false)
+
     await logout("/")
   }
 
   const initials = user?.name
     ? user.name
+
         .split(" ")
+
         .map((n) => n[0])
+
         .join("")
+
         .toUpperCase()
+
         .slice(0, 2)
     : "AS"
 
-  // Only show active user session for patient and doctor accounts on the public navbar.
-  // Admin accounts belong to the backoffice portal, so keep only the "Login" button on the public landing page.
   const isPatientOrDoctor = isAuthenticated && user?.role !== "admin"
 
   const dashboardHref =
-    user?.role === "doctor"
-      ? "/doctor/dashboard"
-      : "/dashboard"
+    user?.role === "doctor" ? "/doctor/dashboard" : "/dashboard"
 
   return (
     <nav className="bg-white border-b border-slate-100 sticky top-0 z-50">

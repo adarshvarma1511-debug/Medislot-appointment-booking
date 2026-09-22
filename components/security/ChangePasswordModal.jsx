@@ -6,9 +6,10 @@
 
 // Session invalidated: logout and redirect to login after short delay
 
-
 import { useState, useEffect } from "react"
+
 import { useRouter } from "next/navigation"
+
 import {
   Lock,
   Eye,
@@ -19,70 +20,89 @@ import {
   X,
   ShieldCheck,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
   const [currentPassword, setCurrentPassword] = useState("")
+
   const [newPassword, setNewPassword] = useState("")
+
   const [confirmPassword, setConfirmPassword] = useState("")
+
   const [showCurrent, setShowCurrent] = useState(false)
+
   const [showNew, setShowNew] = useState(false)
+
   const [showConfirm, setShowConfirm] = useState(false)
+
   const [loading, setLoading] = useState(false)
+
   const [errorMsg, setErrorMsg] = useState("")
+
   const [successMsg, setSuccessMsg] = useState("")
 
   const router = useRouter()
+
   const { user, logout } = useAuth()
+
   useEffect(() => {
     if (isOpen) {
       setCurrentPassword("")
+
       setNewPassword("")
+
       setConfirmPassword("")
+
       setErrorMsg("")
+
       setSuccessMsg("")
+
       setLoading(false)
     }
   }, [isOpen])
 
   if (!isOpen) return null
-  const hasMinLength =
-    newPassword.length >=
-    8
+
+  const hasMinLength = newPassword.length >= 8
+
   const hasUppercase = /[A-Z]/.test(newPassword)
+
   const hasLowercase = /[a-z]/.test(newPassword)
+
   const hasNumber = /[0-9]/.test(newPassword)
+
   const isPolicySatisfied =
     hasMinLength && hasUppercase && hasLowercase && hasNumber
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     setErrorMsg("")
+
     setSuccessMsg("")
 
     if (!currentPassword) {
       setErrorMsg("Please enter your current password.")
+
       return
     }
 
     if (!isPolicySatisfied) {
       setErrorMsg("Password does not meet security requirements.")
+
       return
     }
 
-    if (
-      newPassword !==
-      confirmPassword
-    ) {
+    if (newPassword !== confirmPassword) {
       setErrorMsg("New passwords do not match.")
+
       return
     }
 
-    if (
-      currentPassword ===
-      newPassword
-    ) {
+    if (currentPassword === newPassword) {
       setErrorMsg("New password must be different from your current password.")
+
       return
     }
 
@@ -91,11 +111,16 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
     try {
       const res = await fetch("/api/auth/change-password", {
         method: "PUT",
+
         headers: { "Content-Type": "application/json" },
+
         credentials: "include",
+
         body: JSON.stringify({
           currentPassword,
+
           newPassword,
+
           confirmPassword,
         }),
       })
@@ -104,17 +129,21 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
       if (!res.ok || !data.success) {
         setErrorMsg(data.message || data.error || "Failed to update password.")
+
         setLoading(false)
+
         return
       }
 
       setSuccessMsg(
-        data.message ||
-          "Password changed successfully. Please log in again.",
+        data.message || "Password changed successfully. Please log in again.",
       )
+
       setLoading(false)
+
       setTimeout(() => {
         logout()
+
         if (user?.role === "admin") {
           router.push(
             "/admin/login?message=Password+changed+successfully.+Please+log+in+again.",
@@ -127,6 +156,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
       }, 1500)
     } catch (err) {
       setErrorMsg("An unexpected error occurred while changing password.")
+
       setLoading(false)
     }
   }

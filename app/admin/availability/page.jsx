@@ -15,12 +15,13 @@
 // Load dynamic slots for selected doctor and date
 
 // Handle Save Availability to MongoDB
+
 // Refresh live slots for current view
 
 // Update local doctor object
 
-
 import { useState, useEffect } from "react"
+
 import {
   Save,
   ChevronDown,
@@ -34,64 +35,95 @@ import {
   Building2,
   Sparkles,
 } from "lucide-react"
+
 import AdminLayout from "@/components/layout/AdminLayout"
 
 const DAYS = [
   "Monday",
+
   "Tuesday",
+
   "Wednesday",
+
   "Thursday",
+
   "Friday",
+
   "Saturday",
+
   "Sunday",
 ]
 
 const TIME_OPTIONS = [
   "Not Available",
+
   "8:00 AM – 12:00 PM",
+
   "9:00 AM – 1:00 PM",
+
   "10:00 AM – 1:00 PM",
+
   "2:00 PM – 5:00 PM",
+
   "3:00 PM – 6:00 PM",
+
   "10:00 AM – 5:00 PM",
+
   "9:00 AM – 5:00 PM",
 ]
 
 export default function AdminAvailabilityPage() {
   const [doctors, setDoctors] = useState([])
+
   const [loading, setLoading] = useState(true)
+
   const [selectedDoctorId, setSelectedDoctorId] = useState("")
+
   const [schedule, setSchedule] = useState({
     Monday: "10:00 AM – 1:00 PM",
+
     Tuesday: "10:00 AM – 1:00 PM",
+
     Wednesday: "Not Available",
+
     Thursday: "2:00 PM – 5:00 PM",
+
     Friday: "10:00 AM – 1:00 PM",
+
     Saturday: "Not Available",
+
     Sunday: "Not Available",
   })
+
   const [saving, setSaving] = useState(false)
+
   const [saveSuccess, setSaveSuccess] = useState("")
+
   const [saveError, setSaveError] = useState("")
+
   const todayStr = new Date().toISOString().split("T")[0]
+
   const [selectedDate, setSelectedDate] = useState(todayStr)
+
   const [slotsLoading, setSlotsLoading] = useState(false)
+
   const [slotsData, setSlotsData] = useState(null)
+
   useEffect(() => {
     async function loadDocs() {
       setLoading(true)
+
       try {
         const res = await fetch("/api/doctors")
+
         const data = await res.json()
+
         if (data.success && Array.isArray(data.doctors)) {
           setDoctors(data.doctors)
-          if (
-            data.doctors.length >
-            0
-          ) {
+
+          if (data.doctors.length > 0) {
             setSelectedDoctorId(
-              data.doctors[0].id ||
-                data.doctors[0]._id,
+              data.doctors[0].id || data.doctors[0]._id,
             )
           }
         }
@@ -101,35 +133,39 @@ export default function AdminAvailabilityPage() {
         setLoading(false)
       }
     }
+
     loadDocs()
   }, [])
+
   const currentDoctor =
     doctors.find(
-      (d) =>
-        d.id ===
-          selectedDoctorId ||
-        d._id ===
-          selectedDoctorId,
+      (d) => d.id === selectedDoctorId || d._id === selectedDoctorId,
     ) ||
     doctors[0] ||
     null
+
   useEffect(() => {
     if (!currentDoctor) return
 
     const initialSched = {
       Monday: "Not Available",
+
       Tuesday: "Not Available",
+
       Wednesday: "Not Available",
+
       Thursday: "Not Available",
+
       Friday: "Not Available",
+
       Saturday: "Not Available",
+
       Sunday: "Not Available",
     }
 
     if (
       currentDoctor.weeklySchedule &&
-      typeof currentDoctor.weeklySchedule ===
-        "object"
+      typeof currentDoctor.weeklySchedule === "object"
     ) {
       DAYS.forEach((day) => {
         if (currentDoctor.weeklySchedule[day]) {
@@ -137,28 +173,32 @@ export default function AdminAvailabilityPage() {
         }
       })
     } else if (Array.isArray(currentDoctor.availableDays)) {
-      const shift = `${
-        currentDoctor.startTime ||
-        "10:00 AM"
-      } – ${
-        currentDoctor.endTime ||
-        "01:00 PM"
+      const shift = `${currentDoctor.startTime || "10:00 AM"} – ${
+        currentDoctor.endTime || "01:00 PM"
       }`
+
       currentDoctor.availableDays.forEach((day) => {
         initialSched[day] = shift
       })
     }
 
     setSchedule(initialSched)
+
     setSaveSuccess("")
+
     setSaveError("")
   }, [selectedDoctorId, currentDoctor])
+
   const loadDynamicSlots = async (docId, date) => {
     if (!docId || !date) return
+
     setSlotsLoading(true)
+
     try {
       const res = await fetch(`/api/doctors/${docId}/availability?date=${date}`)
+
       const data = await res.json()
+
       if (data.success) {
         setSlotsData(data)
       } else {
@@ -166,6 +206,7 @@ export default function AdminAvailabilityPage() {
       }
     } catch (err) {
       console.error("Failed to load doctor slots:", err)
+
       setSlotsData(null)
     } finally {
       setSlotsLoading(false)
@@ -177,42 +218,48 @@ export default function AdminAvailabilityPage() {
       loadDynamicSlots(currentDoctor.id, selectedDate)
     }
   }, [currentDoctor?.id, selectedDate])
+
   const handleSaveAvailability = async () => {
     if (!currentDoctor) return
 
     setSaving(true)
+
     setSaveSuccess("")
+
     setSaveError("")
 
     const activeDays = DAYS.filter(
-      (day) =>
-        schedule[day] &&
-        schedule[day] !==
-          "Not Available",
+      (day) => schedule[day] && schedule[day] !== "Not Available",
     )
 
     try {
       const res = await fetch("/api/doctor/availability", {
         method: "PUT",
+
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify({
           doctorId: currentDoctor.id,
+
           weeklySchedule: schedule,
+
           availableDays: activeDays,
         }),
       })
 
       const data = await res.json()
+
       if (!res.ok || !data.success) {
         setSaveError(
-          data.error ||
-            "Failed to update availability schedule.",
+          data.error || "Failed to update availability schedule.",
         )
       } else {
         setSaveSuccess(
           `Availability updated successfully for ${currentDoctor.name}.`,
         )
+
         loadDynamicSlots(currentDoctor.id, selectedDate)
+
         setDoctors((prev) =>
           prev.map((d) =>
             d.id === currentDoctor.id
@@ -327,6 +374,7 @@ export default function AdminAvailabilityPage() {
             {DAYS.map((day) => {
               const isWorking =
                 schedule[day] && schedule[day] !== "Not Available"
+
               return (
                 <div
                   key={day}
@@ -357,6 +405,7 @@ export default function AdminAvailabilityPage() {
                       onChange={(e) =>
                         setSchedule((prev) => ({
                           ...prev,
+
                           [day]: e.target.value,
                         }))
                       }
@@ -449,7 +498,9 @@ export default function AdminAvailabilityPage() {
               <button
                 onClick={() => {
                   const d = new Date()
+
                   d.setDate(d.getDate() + 1)
+
                   setSelectedDate(d.toISOString().split("T")[0])
                 }}
                 className="text-xs font-semibold px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
@@ -514,6 +565,7 @@ export default function AdminAvailabilityPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
                 {slotsData.slots.map((slot) => {
                   const isAvailable = slot.status === "Available"
+
                   return (
                     <div
                       key={slot.time}

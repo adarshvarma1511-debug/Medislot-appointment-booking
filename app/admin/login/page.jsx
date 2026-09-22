@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+
 import Link from "next/link"
+
 import { useRouter, useSearchParams } from "next/navigation"
+
 import {
   Calendar,
   Eye,
@@ -12,45 +15,59 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 
 function AdminLoginFormContent() {
   const [showPw, setShowPw] = useState(false)
+
   const [email, setEmail] = useState("admin@medislot.com")
+
   const [password, setPassword] = useState("admin123")
+
   const [loading, setLoading] = useState(false)
+
   const [errorMsg, setErrorMsg] = useState("")
 
   const router = useRouter()
+
   const searchParams = useSearchParams()
+
   const { user, isAuthenticated, isLoaded, loginWithCredentials, logout } =
     useAuth()
 
   const alertMessage = searchParams.get("message")
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     setErrorMsg("")
+
     setLoading(true)
 
     try {
       const res = await loginWithCredentials(
         email.trim().toLowerCase(),
+
         password,
+
         "admin",
       )
+
       if (!res.success) {
         setErrorMsg(
           res.error || res.message || "Invalid administrator credentials.",
         )
+
         setLoading(false)
+
         return
       }
+
       window.location.href = "/admin/dashboard"
     } catch (err) {
       setErrorMsg("Failed to authenticate administrator.")
+
       setLoading(false)
     }
   }
@@ -92,8 +109,6 @@ function AdminLoginFormContent() {
           {errorMsg}
         </div>
       )}
-
-
 
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8 shadow-xl">
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -142,7 +157,6 @@ function AdminLoginFormContent() {
               </button>
             </div>
           </div>
-
 
           <button
             type="submit"

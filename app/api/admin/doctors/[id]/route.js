@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
+import mongoose from "mongoose"
 import { connectToDatabase } from "@/lib/mongodb"
 import User from "@/models/User"
 import Doctor from "@/models/Doctor"
+import Appointment from "@/models/Appointment"
 
 export async function GET(req, { params }) {
   try {
@@ -174,30 +176,51 @@ export async function DELETE(req, { params }) {
     await connectToDatabase()
     const { id } = await params
 
-    const doctor = await Doctor.findOne({
-      $or: [{ id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }],
-    })
-
-    if (!doctor) {
-      return NextResponse.json({ success: false, error: "Doctor not found" }, {
-        status: 404,
-      })
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Doctor ID is required" },
+        { status: 400 },
+      )
     }
 
-    // Delete associated User account so no orphan login remains
-    const userQuery = doctor.userId
-      ? { _id: doctor.userId }
-      : { $or: [{ doctorId: doctor.id }, { email: doctor.email }] }
+    const isObjectId = mongoose.isValidObjectId(id)
+
+    // 1. Atomic delete query: finds and deletes the doctor in a single operation
+    const deletedDoctor = await Doctor.findOneAndDelete({
+      $or: [
+        { id: id },
+        ...(isObjectId ? [{ _id: id }] : []),
+      ],
+    })
+
+    if (!deletedDoctor) {
+      return NextResponse.json(
+        { success: false, error: "Doctor not found" },
+        { status: 404 },
+      )
+    }
+
+    const userQuery = deletedDoctor.userId
+      ? { _id: deletedDoctor.userId }
+      : { $or: [{ doctorId: deletedDoctor.id }, { email: deletedDoctor.email }] }
 
     await User.deleteMany(userQuery)
 
-    // Delete doctor document
-    await Doctor.deleteOne({ _id: doctor._id })
+    await Appointment.deleteMany({
+      $or: [
+        { doctorId: deletedDoctor.id },
+        ...(deletedDoctor.userId ? [{ doctorUserId: deletedDoctor.userId }] : []),
+      ],
+    })
 
     return NextResponse.json({
       success: true,
-      message: "Doctor and associated login account deleted successfully",
-      deletedId: id,
+      message: "Doctor, login account, and appointments deleted successfully",
+      deletedDoctor: {
+        id: deletedDoctor.id,
+        name: deletedDoctor.name,
+        email: deletedDoctor.email,
+      },
     })
   } catch (error) {
     return NextResponse.json(

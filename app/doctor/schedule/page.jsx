@@ -4,7 +4,6 @@
 
 // Build weeklySchedule map and availableDays
 
-
 import { useState, useEffect } from "react"
 import {
   Clock,
@@ -36,20 +35,8 @@ function convertTo24Hour(timeStr) {
   const minutes = match[2]
   const modifier = match[3] ? match[3].toUpperCase() : null
 
-  if (
-    modifier ===
-      "PM" &&
-    hours <
-      12
-  )
-    hours += 12
-  if (
-    modifier ===
-      "AM" &&
-    hours ===
-      12
-  )
-    hours = 0
+  if (modifier === "PM" && hours < 12) hours += 12
+  if (modifier === "AM" && hours === 12) hours = 0
   return `${hours.toString().padStart(2, "0")}:${minutes}`
 }
 
@@ -57,24 +44,10 @@ function convertTo12Hour(time24) {
   if (!time24) return "10:00 AM"
   const [hStr, mStr] = time24.split(":")
   let hours = parseInt(hStr, 10)
-  const minutes =
-    mStr ||
-    "00"
-  const modifier =
-    hours >=
-    12
-      ? "PM"
-      : "AM"
-  if (
-    hours >
-    12
-  )
-    hours -= 12
-  if (
-    hours ===
-    0
-  )
-    hours = 12
+  const minutes = mStr || "00"
+  const modifier = hours >= 12 ? "PM" : "AM"
+  if (hours > 12) hours -= 12
+  if (hours === 0) hours = 12
   return `${hours.toString().padStart(2, "0")}:${minutes} ${modifier}`
 }
 
@@ -108,29 +81,16 @@ export default function DoctorSchedulePage() {
         const data = await res.json()
 
         if (data.success && data.weeklySchedule) {
-          const availDays =
-            data.availableDays ||
-            []
+          const availDays = data.availableDays || []
           const updated = DEFAULT_DAYS.map((day) => {
             const entry = data.weeklySchedule[day]
-            const isEnabled =
-              entry &&
-              entry !==
-                "Not Available"
+            const isEnabled = entry && entry !== "Not Available"
             let sTime = "10:00"
             let eTime = "13:00"
 
-            if (
-              isEnabled &&
-              typeof entry ===
-                "string" &&
-              entry.includes("–")
-            ) {
+            if (isEnabled && typeof entry === "string" && entry.includes("–")) {
               const parts = entry.split("–").map((p) => p.trim())
-              if (
-                parts.length ===
-                2
-              ) {
+              if (parts.length === 2) {
                 sTime = convertTo24Hour(parts[0])
                 eTime = convertTo24Hour(parts[1])
               }
@@ -141,9 +101,7 @@ export default function DoctorSchedulePage() {
 
             return {
               day,
-              enabled:
-                isEnabled ||
-                availDays.includes(day),
+              enabled: isEnabled || availDays.includes(day),
               startTime: sTime,
               endTime: eTime,
             }
@@ -162,23 +120,13 @@ export default function DoctorSchedulePage() {
 
   const handleToggleDay = (day) => {
     setSchedules((prev) =>
-      prev.map((s) =>
-        s.day ===
-        day
-          ? { ...s, enabled: !s.enabled }
-          : s,
-      ),
+      prev.map((s) => (s.day === day ? { ...s, enabled: !s.enabled } : s)),
     )
   }
 
   const handleTimeChange = (day, field, value) => {
     setSchedules((prev) =>
-      prev.map((s) =>
-        s.day ===
-        day
-          ? { ...s, [field]: value }
-          : s,
-      ),
+      prev.map((s) => (s.day === day ? { ...s, [field]: value } : s)),
     )
   }
 

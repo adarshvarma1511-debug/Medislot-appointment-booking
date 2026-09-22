@@ -1,8 +1,11 @@
 "use client"
 
 import React from "react"
+
 import Link from "next/link"
+
 import { useRouter } from "next/navigation"
+
 import {
   Calendar,
   ArrowRight,
@@ -18,54 +21,80 @@ import {
   Shield,
   Search,
 } from "lucide-react"
+
 import Navbar from "@/components/layout/Navbar"
+
 import { useAuth } from "@/context/AuthContext"
 
 const stats = [
   { value: "25+", label: "Expert Doctors" },
+
   { value: "8", label: "Departments" },
+
   { value: "500+", label: "Patients Served" },
+
   { value: "Easy", label: "Appointment Booking" },
 ]
 
 const steps = [
   {
     step: "01",
+
     icon: Search,
+
     title: "Find a Doctor",
+
     desc: "Search by name or specialization to discover the right doctor for your needs.",
   },
+
   {
     step: "02",
+
     icon: Calendar,
+
     title: "Check Availability",
+
     desc: "View real-time doctor availability and open time slots for your preferred date.",
   },
+
   {
     step: "03",
+
     icon: Clock,
+
     title: "Choose a Time Slot",
+
     desc: "Select a convenient appointment slot from the available options.",
   },
+
   {
     step: "04",
+
     icon: CheckCircle,
+
     title: "Confirm Appointment",
+
     desc: "Review details and confirm your appointment. Receive instant confirmation.",
   },
 ]
 
 const depts = [
   { name: "Cardiology", icon: Heart, count: 4 },
+
   { name: "Dermatology", icon: Sun, count: 3 },
+
   { name: "Orthopedics", icon: Activity, count: 5 },
+
   { name: "Pediatrics", icon: Baby, count: 3 },
+
   { name: "Neurology", icon: Zap, count: 3 },
+
   { name: "General Medicine", icon: Stethoscope, count: 7 },
 ]
 
 export default function LandingPage() {
   const router = useRouter()
+
   const { isAuthenticated, user } = useAuth()
 
   const handleFindDoctor = () => {
@@ -77,7 +106,9 @@ export default function LandingPage() {
   }
 
   const handleBookAppointment = (customUrl) => {
-    const targetUrl = typeof customUrl === "string" ? customUrl : "/book-appointment"
+    const targetUrl =
+      typeof customUrl === "string" ? customUrl : "/book-appointment"
+
     if (!isAuthenticated || user?.role === "doctor") {
       router.push("/login")
     } else {
@@ -156,10 +187,15 @@ export default function LandingPage() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   "10:00 AM",
+
                   "10:30 AM",
+
                   "11:00 AM",
+
                   "11:30 AM",
+
                   "12:00 PM",
+
                   "12:30 PM",
                 ].map((t, i) => (
                   <div
@@ -358,4 +394,3 @@ export default function LandingPage() {
     </div>
   )
 }
-

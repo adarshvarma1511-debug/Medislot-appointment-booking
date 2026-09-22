@@ -116,4 +116,107 @@ const UserSchema = new mongoose.Schema(
   },
 )
 
-export default mongoose.models.User || mongoose.model("User", UserSchema)
+
+
+/**
+ 
+ * @param {Object} filter - Additional match criteria
+ * @returns {Promise<number>} - Count of matching admins
+ */
+UserSchema.statics.countAdmins = async function (filter = {}) {
+  const pipeline = [
+    { $match: { role: "admin", ...filter } },
+    { $count: "totalAdmins" },
+  ]
+  const result = await this.aggregate(pipeline)
+  return result.length > 0 ? result[0].totalAdmins : 0
+}
+
+/**
+ * Aggregation function using $match and $count to get admin count.
+ *
+ * @param {Object} criteria - Match criteria for admins
+ * @returns {Promise<number>} - Count of admins
+ */
+UserSchema.statics.matchAndCountAdmins = async function (criteria = {}) {
+  const pipeline = [
+    { $match: { role: "admin", ...criteria } },
+    { $count: "count" },
+  ]
+  const result = await this.aggregate(pipeline)
+  return result.length > 0 ? result[0].count : 0
+}
+
+/**
+ * Aggregation function using $match and $count alias.
+ */
+UserSchema.statics.getAdminCount = async function (filter = {}) {
+  return await this.countAdmins(filter)
+}
+
+/**
+ * Aggregation pipeline using $match, $group, and $project
+ * to summarize admin distribution by status and activity.
+ *
+ * @returns {Promise<Array>} - Aggregated statistics by status
+ */
+UserSchema.statics.getAdminStats = async function () {
+  return await this.aggregate([
+    { $match: { role: "admin" } },
+    {
+      $group: {
+        _id: "$status",
+        total: { $sum: 1 },
+        lastLogin: { $max: "$lastLogin" },
+      },
+    },
+    {
+      $project: {
+        status: "$_id",
+        total: 1,
+        lastLogin: 1,
+        _id: 0,
+      },
+    },
+  ])
+}
+
+/**
+ * Flexible admin aggregation runner that enforces a $match for role: "admin",
+ * then appends custom pipeline stages (e.g. $match, $count, $group, $sort).
+ *
+ * @param {Array} additionalStages - Subsequent pipeline stages
+ * @returns {Promise<Array>} - Aggregation result
+ */
+UserSchema.statics.getAdminsAggregation = async function (additionalStages = []) {
+  return await this.aggregate([
+    { $match: { role: "admin" } },
+    ...(Array.isArray(additionalStages) ? additionalStages : []),
+  ])
+}
+
+// Reset cached model in Next.js development so updated statics take effect immediately
+if (mongoose.models && mongoose.models.User) {
+  delete mongoose.models.User
+}
+
+const User = mongoose.model("User", UserSchema)
+
+// Standalone exported helper functions (can be imported directly)
+export async function countAdmins(filter = {}) {
+  return await User.countAdmins(filter)
+}
+
+export async function matchAndCountAdmins(criteria = {}) {
+  return await User.matchAndCountAdmins(criteria)
+}
+
+export async function getAdminStats() {
+  return await User.getAdminStats()
+}
+
+export async function getAdminsAggregation(stages = []) {
+  return await User.getAdminsAggregation(stages)
+}
+
+export default User

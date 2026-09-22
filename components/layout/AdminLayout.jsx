@@ -1,33 +1,42 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Menu } from "lucide-react";
-import AdminSidebar from "./AdminSidebar";
-import DatabaseBadge from "../ui/DatabaseBadge";
-import NotificationBell from "../ui/NotificationBell";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from "react"
+
+import { useRouter } from "next/navigation"
+
+import { Menu } from "lucide-react"
+
+import AdminSidebar from "./AdminSidebar"
+
+import DatabaseBadge from "../ui/DatabaseBadge"
+
+import NotificationBell from "../ui/NotificationBell"
+
+import { useAuth } from "@/context/AuthContext"
 
 export default function AdminLayout({ children }) {
-  const { isAuthenticated, isLoaded, isLoggingOut, user } = useAuth();
-  const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isAuthenticated, isLoaded, isLoggingOut, user } = useAuth()
+
+  const router = useRouter()
+
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!isLoaded || isLoggingOut) return;
+    if (!isLoaded || isLoggingOut) return
+
     if (!isAuthenticated) {
-      router.replace("/admin/login");
+      router.replace("/admin/login")
     } else if (user?.role !== "admin") {
       if (user?.role === "doctor") {
-        router.replace("/doctor/dashboard");
+        router.replace("/doctor/dashboard")
       } else {
-        router.replace("/dashboard");
+        router.replace("/dashboard")
       }
     }
-  }, [isAuthenticated, isLoaded, isLoggingOut, user, router]);
+  }, [isAuthenticated, isLoaded, isLoggingOut, user, router])
 
   if (isLoggingOut) {
-    return <div className="min-h-screen bg-slate-900" />;
+    return <div className="min-h-screen bg-slate-900" />
   }
 
   if (!isLoaded || !isAuthenticated || user?.role !== "admin") {
@@ -35,10 +44,12 @@ export default function AdminLayout({ children }) {
       <div className="flex h-screen items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-slate-400 font-medium">Verifying Admin Authorization...</p>
+          <p className="text-sm text-slate-400 font-medium">
+            Verifying Admin Authorization...
+          </p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -49,7 +60,10 @@ export default function AdminLayout({ children }) {
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          <div className="fixed inset-0 bg-slate-900/50" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="fixed inset-0 bg-slate-900/50"
+            onClick={() => setSidebarOpen(false)}
+          />
           <div className="relative z-10">
             <AdminSidebar mobile onClose={() => setSidebarOpen(false)} />
           </div>
@@ -66,8 +80,12 @@ export default function AdminLayout({ children }) {
               <Menu className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">MediSlot Admin</h2>
-              <p className="text-xs text-slate-400">Hospital Administration Panel</p>
+              <h2 className="text-sm font-semibold text-slate-900">
+                MediSlot Admin
+              </h2>
+              <p className="text-xs text-slate-400">
+                Hospital Administration Panel
+              </p>
             </div>
           </div>
 
@@ -86,10 +104,8 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
-  );
+  )
 }

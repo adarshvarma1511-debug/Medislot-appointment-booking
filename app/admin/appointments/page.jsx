@@ -6,8 +6,8 @@
 
 // Refresh list in background
 
-
 import { useState, useEffect } from "react"
+
 import {
   Search,
   Filter,
@@ -26,37 +26,54 @@ import {
   Ban,
   Check,
 } from "lucide-react"
+
 import StatusBadge from "@/components/ui/StatusBadge"
+
 import AdminLayout from "@/components/layout/AdminLayout"
 
 const statuses = ["All", "confirmed", "upcoming", "completed", "cancelled"]
 
 export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState([])
+
   const [doctors, setDoctors] = useState([])
+
   const [loading, setLoading] = useState(true)
+
   const [query, setQuery] = useState("")
+
   const [statusFilter, setStatusFilter] = useState("All")
+
   const [doctorFilter, setDoctorFilter] = useState("All")
+
   const [deptFilter, setDeptFilter] = useState("All")
+
   const [selectedAppt, setSelectedAppt] = useState(null)
+
   const [updating, setUpdating] = useState(false)
+
   const [actionSuccess, setActionSuccess] = useState("")
+
   const [actionError, setActionError] = useState("")
 
   const loadData = async () => {
     setLoading(true)
+
     try {
       const [apptsRes, docsRes] = await Promise.all([
         fetch("/api/appointments"),
+
         fetch("/api/doctors"),
       ])
+
       const apptsData = await apptsRes.json()
+
       const docsData = await docsRes.json()
 
       if (apptsData.success && Array.isArray(apptsData.appointments)) {
         setAppointments(apptsData.appointments)
       }
+
       if (docsData.success && Array.isArray(docsData.doctors)) {
         setDoctors(docsData.doctors)
       }
@@ -74,58 +91,57 @@ export default function AdminAppointmentsPage() {
   const departmentList = Array.from(
     new Set([
       ...doctors.map((d) => d.department).filter(Boolean),
+
       ...appointments.map((a) => a.department).filter(Boolean),
     ]),
   )
 
   const filtered = appointments.filter((a) => {
     const apptId = (a.appointmentId || a.id || "").toLowerCase()
-    const patient = (
-      a.patientName ||
-      ""
-    ).toLowerCase()
-    const doctor = (
-      a.doctorName ||
-      ""
-    ).toLowerCase()
+
+    const patient = (a.patientName || "")
+
+      .toLowerCase()
+
+    const doctor = (a.doctorName || "")
+
+      .toLowerCase()
+
     const q = query.toLowerCase()
 
     const matchQ =
-      query ===
-        "" ||
+      query === "" ||
       apptId.includes(q) ||
       patient.includes(q) ||
       doctor.includes(q)
+
     const matchStatus =
-      statusFilter ===
-        "All" ||
-      (
-        a.status ||
-        ""
-      ).toLowerCase() ===
-        statusFilter.toLowerCase()
+      statusFilter === "All" ||
+      (a.status || "")
+
+        .toLowerCase() === statusFilter.toLowerCase()
+
     const matchDoctor =
-      doctorFilter ===
-        "All" ||
-      a.doctorId ===
-        doctorFilter ||
-      (a.doctorUserId &&
-        a.doctorUserId ===
-          doctorFilter)
+      doctorFilter === "All" ||
+      a.doctorId === doctorFilter ||
+      (a.doctorUserId && a.doctorUserId === doctorFilter)
+
     const matchDept =
-      deptFilter ===
-        "All" ||
-      (
-        a.department ||
-        ""
-      ).toLowerCase() ===
-        deptFilter.toLowerCase()
+      deptFilter === "All" ||
+      (a.department || "")
+
+        .toLowerCase() === deptFilter.toLowerCase()
+
     return matchQ && matchStatus && matchDoctor && matchDept
   })
+
   const handleUpdateStatus = async (newStatus) => {
     if (!selectedAppt) return
+
     setUpdating(true)
+
     setActionSuccess("")
+
     setActionError("")
 
     const targetId =
@@ -134,21 +150,25 @@ export default function AdminAppointmentsPage() {
     try {
       const res = await fetch(`/api/appointments/${targetId}/status`, {
         method: "PATCH",
+
         headers: { "Content-Type": "application/json" },
+
         body: JSON.stringify({ status: newStatus }),
       })
 
       const data = await res.json()
+
       if (!res.ok || !data.success) {
         setActionError(
-          data.error ||
-            "Failed to update appointment status.",
+          data.error || "Failed to update appointment status.",
         )
       } else {
         setActionSuccess(
           `Appointment status successfully updated to ${newStatus}.`,
         )
+
         setSelectedAppt((prev) => ({ ...prev, status: newStatus }))
+
         setAppointments((prev) =>
           prev.map((item) =>
             (item.appointmentId || item.id) === targetId
@@ -262,12 +282,19 @@ export default function AdminAppointmentsPage() {
                   <tr className="bg-slate-50 border-b border-slate-100">
                     {[
                       "Appointment ID",
+
                       "Patient",
+
                       "Doctor",
+
                       "Department",
+
                       "Date",
+
                       "Time",
+
                       "Status",
+
                       "Actions",
                     ].map((h) => (
                       <th
@@ -308,7 +335,9 @@ export default function AdminAppointmentsPage() {
                         {a.date
                           ? new Date(a.date).toLocaleDateString("en-IN", {
                               day: "numeric",
+
                               month: "short",
+
                               year: "numeric",
                             })
                           : "-"}
@@ -323,7 +352,9 @@ export default function AdminAppointmentsPage() {
                         <button
                           onClick={() => {
                             setSelectedAppt(a)
+
                             setActionSuccess("")
+
                             setActionError("")
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer"
@@ -459,9 +490,12 @@ export default function AdminAppointmentsPage() {
                         {selectedAppt.date
                           ? new Date(selectedAppt.date).toLocaleDateString(
                               "en-IN",
+
                               {
                                 day: "numeric",
+
                                 month: "long",
+
                                 year: "numeric",
                               },
                             )

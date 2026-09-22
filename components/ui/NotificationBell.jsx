@@ -1,7 +1,42 @@
 "use client"
 
+// Fetch unread count
+
+// Fetch full notification list
+
+// Initial load and periodic polling (every 30 seconds)
+
+// 30 seconds interval polling
+
+// Re-check on tab focus / window visibility
+
+// Close dropdown on outside click or Escape key
+
+// Toggle dropdown
+
+// Mark single notification as read
+
+// Optimistic UI update
+
+// Re-fetch on error to ensure sync
+
+// Mark all notifications as read
+
+// Optimistic UI update
+
+// Delete notification
+
+// Optimistic UI update
+
+// Handle notification click: mark as read and navigate
+
+// Role-based navigation based on relatedType
+/* Bell Trigger Button */ /* Unread Count Badge (Only rendered when unreadCount > 0, NEVER shows '0') */ /* Notification Dropdown Panel */ /* Header */ /* Notification List Body */ /* Event Icon */ /* Content */ /* Dropdown Footer */
+
 import { useState, useEffect, useRef, useCallback } from "react"
+
 import { useRouter } from "next/navigation"
+
 import {
   Bell,
   Check,
@@ -14,69 +49,137 @@ import {
   X,
   Clock,
 } from "lucide-react"
+
 import { useAuth } from "@/context/AuthContext"
 
 function formatRelativeTime(dateString) {
   if (!dateString) return ""
+
   const date = new Date(dateString)
+
   const now = new Date()
+
   const diffInSeconds = Math.floor((now - date) / 1000)
 
-  if (diffInSeconds < 30) return "Just now"
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`
+  if (
+    diffInSeconds <
+    30
+  )
+    return "Just now"
 
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+  if (
+    diffInSeconds <
+    60
+  )
+    return `${diffInSeconds}s ago`
 
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) return `${diffInHours}h ago`
+  const diffInMinutes = Math.floor(
+    diffInSeconds /
+      60,
+  )
 
-  const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays === 1) return "Yesterday"
-  if (diffInDays < 7) return `${diffInDays}d ago`
+  if (
+    diffInMinutes <
+    60
+  )
+    return `${diffInMinutes}m ago`
+
+  const diffInHours = Math.floor(
+    diffInMinutes /
+      60,
+  )
+
+  if (
+    diffInHours <
+    24
+  )
+    return `${diffInHours}h ago`
+
+  const diffInDays = Math.floor(
+    diffInHours /
+      24,
+  )
+
+  if (
+    diffInDays ===
+    1
+  )
+    return "Yesterday"
+
+  if (
+    diffInDays <
+    7
+  )
+    return `${diffInDays}d ago`
 
   return date.toLocaleDateString("en-US", {
     month: "short",
+
     day: "numeric",
   })
 }
 
 function getNotificationIcon(type, relatedType) {
-  if (type.includes("appointment") || relatedType === "appointment") {
+  if (
+    type.includes("appointment") ||
+    relatedType ===
+      "appointment"
+  ) {
     return <Calendar className="w-4 h-4 text-teal-600" />
   }
-  if (type.includes("doctor") || relatedType === "doctor") {
+
+  if (
+    type.includes("doctor") ||
+    relatedType ===
+      "doctor"
+  ) {
     return <Stethoscope className="w-4 h-4 text-emerald-600" />
   }
-  if (type.includes("patient") || relatedType === "patient") {
+
+  if (
+    type.includes("patient") ||
+    relatedType ===
+      "patient"
+  ) {
     return <UserPlus className="w-4 h-4 text-indigo-600" />
   }
+
   return <Info className="w-4 h-4 text-slate-600" />
 }
 
 export default function NotificationBell() {
   const { user, isAuthenticated } = useAuth()
+
   const router = useRouter()
 
   const [unreadCount, setUnreadCount] = useState(0)
+
   const [notifications, setNotifications] = useState([])
+
   const [isOpen, setIsOpen] = useState(false)
+
   const [loading, setLoading] = useState(false)
+
   const [markingAll, setMarkingAll] = useState(false)
 
   const dropdownRef = useRef(null)
 
-  // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
     if (!isAuthenticated) return
+
     try {
       const res = await fetch("/api/notifications/unread-count", {
         headers: { "Cache-Control": "no-cache" },
       })
+
       if (res.ok) {
         const data = await res.json()
+
         if (data.success) {
-          setUnreadCount(Number(data.count) || 0)
+          setUnreadCount(
+            Number(data.count) ||
+              0,
+          )
         }
       }
     } catch (err) {
@@ -84,19 +187,24 @@ export default function NotificationBell() {
     }
   }, [isAuthenticated])
 
-  // Fetch full notification list
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return
+
     setLoading(true)
+
     try {
       const res = await fetch("/api/notifications?limit=40", {
         headers: { "Cache-Control": "no-cache" },
       })
+
       if (res.ok) {
         const data = await res.json()
+
         if (data.success && Array.isArray(data.notifications)) {
           setNotifications(data.notifications)
+
           const unread = data.notifications.filter((n) => !n.isRead).length
+
           setUnreadCount(unread)
         }
       }
@@ -107,36 +215,39 @@ export default function NotificationBell() {
     }
   }, [isAuthenticated])
 
-  // Initial load and periodic polling (every 30 seconds)
   useEffect(() => {
     if (!isAuthenticated) {
       setUnreadCount(0)
+
       setNotifications([])
+
       return
     }
 
     fetchUnreadCount()
 
-    // 30 seconds interval polling
     const interval = setInterval(() => {
       fetchUnreadCount()
     }, 30000)
 
-    // Re-check on tab focus / window visibility
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
         fetchUnreadCount()
       }
     }
+
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
       clearInterval(interval)
+
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [isAuthenticated, fetchUnreadCount])
 
-  // Close dropdown on outside click or Escape key
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -145,42 +256,58 @@ export default function NotificationBell() {
     }
 
     function handleKeyDown(event) {
-      if (event.key === "Escape") {
+      if (
+        event.key ===
+        "Escape"
+      ) {
         setIsOpen(false)
       }
     }
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside)
+
       document.addEventListener("keydown", handleKeyDown)
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
+
       document.removeEventListener("keydown", handleKeyDown)
     }
   }, [isOpen])
 
-  // Toggle dropdown
   const handleToggle = () => {
     if (!isOpen) {
       fetchNotifications()
+
       setIsOpen(true)
     } else {
       setIsOpen(false)
     }
   }
 
-  // Mark single notification as read
   const handleMarkAsRead = async (notif, e) => {
     if (e) e.stopPropagation()
+
     if (notif.isRead) return
 
-    // Optimistic UI update
     setNotifications((prev) =>
-      prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n)),
+      prev.map((n) =>
+        n._id ===
+        notif._id
+          ? { ...n, isRead: true }
+          : n,
+      ),
     )
-    setUnreadCount((prev) => Math.max(0, prev - 1))
+
+    setUnreadCount((prev) =>
+      Math.max(
+        0,
+        prev -
+          1,
+      ),
+    )
 
     try {
       await fetch(`/api/notifications/${notif._id}/read`, {
@@ -188,18 +315,23 @@ export default function NotificationBell() {
       })
     } catch (err) {
       console.error("[NotificationBell] Error marking as read:", err)
-      // Re-fetch on error to ensure sync
+
       fetchUnreadCount()
     }
   }
 
-  // Mark all notifications as read
   const handleMarkAllRead = async () => {
-    if (unreadCount === 0 || markingAll) return
+    if (
+      unreadCount ===
+        0 ||
+      markingAll
+    )
+      return
+
     setMarkingAll(true)
 
-    // Optimistic UI update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+
     setUnreadCount(0)
 
     try {
@@ -208,20 +340,32 @@ export default function NotificationBell() {
       })
     } catch (err) {
       console.error("[NotificationBell] Error marking all as read:", err)
+
       fetchUnreadCount()
     } finally {
       setMarkingAll(false)
     }
   }
 
-  // Delete notification
   const handleDelete = async (notif, e) => {
     if (e) e.stopPropagation()
 
-    // Optimistic UI update
-    setNotifications((prev) => prev.filter((n) => n._id !== notif._id))
+    setNotifications((prev) =>
+      prev.filter(
+        (n) =>
+          n._id !==
+          notif._id,
+      ),
+    )
+
     if (!notif.isRead) {
-      setUnreadCount((prev) => Math.max(0, prev - 1))
+      setUnreadCount((prev) =>
+        Math.max(
+          0,
+          prev -
+            1,
+        ),
+      )
     }
 
     try {
@@ -230,18 +374,18 @@ export default function NotificationBell() {
       })
     } catch (err) {
       console.error("[NotificationBell] Error deleting notification:", err)
+
       fetchNotifications()
     }
   }
 
-  // Handle notification click: mark as read and navigate
   const handleNotificationClick = async (notif) => {
     if (!notif.isRead) {
       handleMarkAsRead(notif)
     }
+
     setIsOpen(false)
 
-    // Role-based navigation based on relatedType
     const userRole = user?.role || "patient"
 
     if (notif.relatedType === "appointment") {
@@ -271,7 +415,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative inline-block" ref={dropdownRef}>
-      {/* Bell Trigger Button */}
+      {}
       <button
         onClick={handleToggle}
         aria-label="Notifications"
@@ -284,7 +428,7 @@ export default function NotificationBell() {
       >
         <Bell className="w-5 h-5 transition-transform active:scale-95" />
 
-        {/* Unread Count Badge (Only rendered when unreadCount > 0, NEVER shows '0') */}
+        {}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 border-white animate-in zoom-in-50 duration-200">
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -292,10 +436,10 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Notification Dropdown Panel */}
+      {}
       {isOpen && (
         <div className="absolute right-0 mt-2.5 w-[330px] sm:w-[400px] bg-white rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden flex flex-col animate-in fade-in-50 slide-in-from-top-2 duration-150">
-          {/* Header */}
+          {}
           <div className="px-4 py-3.5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
@@ -333,7 +477,7 @@ export default function NotificationBell() {
             </div>
           </div>
 
-          {/* Notification List Body */}
+          {}
           <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
             {loading && notifications.length === 0 ? (
               <div className="py-12 text-center">
@@ -351,12 +495,14 @@ export default function NotificationBell() {
                   No notifications yet
                 </p>
                 <p className="text-xs text-slate-400 mt-1 max-w-[240px] mx-auto">
-                  When updates about your appointments or system activity occur, they will appear here.
+                  When updates about your appointments or system activity occur,
+                  they will appear here.
                 </p>
               </div>
             ) : (
               notifications.map((notif) => {
                 const isUnread = !notif.isRead
+
                 return (
                   <div
                     key={notif._id}
@@ -367,7 +513,7 @@ export default function NotificationBell() {
                         : "bg-white hover:bg-slate-50 border-transparent text-slate-600"
                     }`}
                   >
-                    {/* Event Icon */}
+                    {}
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
                         isUnread
@@ -378,7 +524,7 @@ export default function NotificationBell() {
                       {getNotificationIcon(notif.type, notif.relatedType)}
                     </div>
 
-                    {/* Content */}
+                    {}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <p
@@ -397,7 +543,9 @@ export default function NotificationBell() {
 
                       <p
                         className={`text-[12px] leading-relaxed line-clamp-2 ${
-                          isUnread ? "text-slate-800 font-medium" : "text-slate-500"
+                          isUnread
+                            ? "text-slate-800 font-medium"
+                            : "text-slate-500"
                         }`}
                       >
                         {notif.message}
@@ -435,7 +583,7 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {/* Dropdown Footer */}
+          {}
           {notifications.length > 0 && (
             <div className="px-4 py-2.5 bg-slate-50/80 border-t border-slate-100 text-center text-[11px] text-slate-400 font-medium">
               Click an appointment notification to view its details
