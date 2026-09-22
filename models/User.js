@@ -195,14 +195,12 @@ UserSchema.statics.getAdminsAggregation = async function (additionalStages = [])
   ])
 }
 
-// Reset cached model in Next.js development so updated statics take effect immediately
 if (mongoose.models && mongoose.models.User) {
   delete mongoose.models.User
 }
 
 const User = mongoose.model("User", UserSchema)
 
-// Standalone exported helper functions (can be imported directly)
 export async function countAdmins(filter = {}) {
   return await User.countAdmins(filter)
 }
